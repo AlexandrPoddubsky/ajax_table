@@ -33,9 +33,7 @@ function theme_ajax_table($element) {
   $rows = $element['rows'];
   $rows_keys = element_children($rows);
 
-  if (isset($element['#draggable']['table_id']) &&
-    isset($element['#draggable']['row_class'])
-  ) {
+  if (isset($element['#draggable']) && count($element['#draggable']) > 3) {
     foreach ($rows_keys as $i) {
       $row_attr =
         isset($rows[$i]['#attributes']) ? $rows[$i]['#attributes'] : array();
@@ -48,8 +46,9 @@ function theme_ajax_table($element) {
         $row['data'][$j] = $rows[$i][$j];
       $rows[$i] = $row;
     }
-    drupal_add_tabledrag($element['#draggable']['table_id'], 'order', 'sibling',
-      $element['#draggable']['row_class'], NULL, NULL, TRUE);  
+    call_user_func_array('drupal_add_tabledrag', $element['#draggable']);
+    //drupal_add_tabledrag($element['#draggable']['table_id'], 'order', 'sibling',
+    //  $element['#draggable']['row_class'], NULL, NULL, TRUE);  
   }
   // Add sticky headers, if applicable.
   if (count($header) && $sticky) {
