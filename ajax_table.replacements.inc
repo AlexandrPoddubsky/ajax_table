@@ -4,19 +4,6 @@ define('AJAX_TABLE_THROBBER', 'none');
 define('AJAX_TABLE_NON_EXISTING_PAGE', 'non/existing/page');
 
 /**
- * ajax_table module replacements
- * Functions:
- * - theme_table
- * - tablesort_header
- * - theme_pager
- * - theme_pager_first 
- * - theme_pager_previous
- * - theme_pager_next 
- * - theme_pager_last
- * - theme_pager_link
- */
-
-/**
  * Overrides theme_table
  */
 function theme_ajax_table($element) {
@@ -33,7 +20,7 @@ function theme_ajax_table($element) {
   $rows = $element['rows'];
   $rows_keys = element_children($rows);
 
-  if (isset($element['#draggable']) && count($element['#draggable']) > 3) {
+  if (isset($element['#draggable']) && $element['#draggable']) {
     foreach ($rows_keys as $i) {
       $row_attr =
         isset($rows[$i]['#attributes']) ? $rows[$i]['#attributes'] : array();
@@ -46,10 +33,8 @@ function theme_ajax_table($element) {
         $row['data'][$j] = $rows[$i][$j];
       $rows[$i] = $row;
     }
-    call_user_func_array('drupal_add_tabledrag', $element['#draggable']);
-    //drupal_add_tabledrag($element['#draggable']['table_id'], 'order', 'sibling',
-    //  $element['#draggable']['row_class'], NULL, NULL, TRUE);  
   }
+  
   // Add sticky headers, if applicable.
   if (count($header) && $sticky) {
     drupal_add_js('misc/tableheader.js');

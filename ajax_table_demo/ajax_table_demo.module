@@ -5,8 +5,6 @@
  */
 function ajax_table_demo_menu() {
   $items = array();
-
-  // Change the description of a form element.
   $items['ajax_table_demo'] = array(
     'title' => 'ajax_table demo',
     'page callback' => 'drupal_get_form',
@@ -14,7 +12,6 @@ function ajax_table_demo_menu() {
 		'access arguments'  => array('access content'),
 		'type' => MENU_NORMAL_ITEM,
   );
-  
   return $items;
 }
 
@@ -23,13 +20,12 @@ function ajax_table_demo_form($form, &$form_state) {
 
   $count = 25;
   $per_page = 5;
-  
   pager_default_initialize($count, $per_page);
 	$form['pager'] = array(
 		'#type' => 'ajax_pager',
     '#element' => 0,
 	);
-
+  
 	$headers = array(
 		array('data' => t('Row index'), 'field' => 'index'),
 		array('data' => t('AJAXed textfield')),
@@ -37,7 +33,7 @@ function ajax_table_demo_form($form, &$form_state) {
 		array('data' => t('Action')),
 		array('data' => t('Weight')),    
 	);
-
+  
 	$form['table'] = array(
     '#type' => 'ajax_table',
 		'#prefix' => '<div id="ajax-table-demo-form-debug-replace">',
@@ -49,36 +45,19 @@ function ajax_table_demo_form($form, &$form_state) {
     '#attributes' => array(
       'id' => 'ajax-table-id',
     ),
-    // Slightly simplifies your life
+    // Adds ".draggable" class to rows
     // Don't forget add weight field to header and to each row
-    '#draggable' => array(
-      'table_id'      => 'ajax-table-id',
-      'action'        => 'order',
-      'relationship'  => 'sibling',
-      'group'         => 'ajax-table-weight',
-      'subgroup'      => NULL,
-      'source'        => NULL, 
-      'hidden'        => TRUE,
-      'limit'         => 0,
-    ),
-    '#replacements' => array(
-      // Do not replace whole form, cause it generates in ajax callback
-      // Generated elements example
-      // <form action="/system/ajax_table_callback/-tNEWUj64iOnQnQdF6bm0s1f6oi2N0V6SoNJ4bVeF3Q/ajax?page=1" method="post" id="hive-config-hive-service-form--2" accept-charset="UTF-8">
-      // JS fails, links turn into (non js in ajax_table.replacements.inc)
-      // <a title="Go to page 3" href="/system/ajax_table_callback/nt6zdqUtlCasVh0lB_zs998ujNMP9Nr_AASxQg31h_c/ajax?page=2" class="ajax-table-link ajax-table-non-js-link">3</a>
-      //'hive-service-form-wrapper' => array(),
-    ),
+    '#draggable' => TRUE,
+    '#replacements' => array(),
 	);
-  // TODO add tabledrag
-
+  drupal_add_tabledrag('ajax-table-id', 'order', 'sibling', 'ajax-table-weight');
+  
 	for ($i = 0; $i < $count; $i++) {
 		$index = array(
 			'#type' => 'value',
       '#value' => $i,
 			'view' => array('#markup' => $i),
 		);
-    // Activate custom $form_table rows storage
     if (isset($form_state['rows'][$i])) {
       $_value =
         isset($form_state['rows'][$i]['input']['data']) ?
@@ -188,14 +167,6 @@ function ajax_table_demo_form($form, &$form_state) {
 }
 
 function ajax_table_input_ajax_callback(&$form, &$form_state) {
-  // TODO something wrong here...
-  // Different $form_state['values'] storage for table
-  // It saves enetered values through pages,
-  // $form_state actually contains only single page data
-  /*if (!isset($form_state['rows'])) $form_state['rows'] = array();
-  $form_state['rows'] = $form_state['values']['table']['rows'] + $form_state['rows'];
-  form_set_cache($form['#build_id'], $form, $form_state);*/
-
 	if(isset($form_state['triggering_element']['#index']))
 		$index = $form_state['triggering_element']['#index'];
 	else return '';
