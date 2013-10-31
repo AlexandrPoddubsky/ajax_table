@@ -95,6 +95,7 @@ function ajax_table_demo_form($form, &$form_state) {
       '#prefix' => "<div id='ajax-table-demo-form-action-$i'>",
       '#suffix' => '</div>',
       '#type' => 'submit',
+      '#submit' => array('ajax_table_action_submit'),
       '#value' => t('Action'),
       '#ajax' => array(
         'wrapper' => "ajax-table-demo-form-action-$i",
@@ -166,6 +167,10 @@ function ajax_table_demo_form($form, &$form_state) {
 	return $form;
 }
 
+function ajax_table_action_submit(&$form, &$form_state) {
+  $form_state['rebuild'] = TRUE;
+}
+
 function ajax_table_input_ajax_callback(&$form, &$form_state) {
 	if(isset($form_state['triggering_element']['#index']))
 		$index = $form_state['triggering_element']['#index'];
@@ -196,11 +201,7 @@ function uasort_compare() {
 }
 
 function ajax_table_demo_form_submit(&$form, &$form_state) {
-  $form_state['cache'] = TRUE;
-  unset($form_state['no_cache']);
-  $form_state['rebuild_info']['copy']['#build_id'] = $form['#build_id'];
-  $form_state['rebuild'] = TRUE;  
-  dpm($form_state);
-  dpm($form);  
-  dpm($form['#build_id']);
+  $form_state['rebuild'] = TRUE;
+  if (function_exists('dpm')) dpm($form_state);
+  if (function_exists('dpm')) dpm($form);
 }

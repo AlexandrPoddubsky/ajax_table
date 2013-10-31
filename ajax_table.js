@@ -3,8 +3,8 @@
   if (Drupal.ajax != undefined) {
     Drupal.ajax.prototype.commands.proper_replace = function (ajax, response, status) {
       $(response.selector).replaceWith(response.data);
-      Drupal.attachBehaviors(response.selector);
-      //Drupal.attachBehaviors();      
+      //Drupal.attachBehaviors(response.selector);
+      Drupal.attachBehaviors();      
     }
   }
   // Graceful degradation
