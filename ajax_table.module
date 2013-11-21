@@ -1,6 +1,8 @@
 <?php
 
-module_load_include('inc', 'ajax_table', 'ajax_table.replacements');
+module_load_include('inc', 'ajax_table', 'ajax_table.theme');
+
+define('AJAX_TABLE_DEFAULT_CALLBACK', 'admin/system/ajax_table_callback');
 
 /**
  * There are two ways of implementing AJAX features into table and pager
@@ -20,14 +22,14 @@ module_load_include('inc', 'ajax_table', 'ajax_table.replacements');
 function ajax_table_menu() {
   $items = array();
   
-	// Callback for table pager/sort AJAX
-	$items['system/ajax_table_callback/%ajax_table_key/%ajax_table_js'] = array(
-		'page callback'		=> 'ajax_table_callback',
-		'page arguments'	=> array(2,3),
-		'access callback' => 1,
-		'delivery callback' => 'ajax_deliver',
-		'type' => MENU_CALLBACK,
-	);
+  // Callback for table pager/sort AJAX
+  $items[AJAX_TABLE_DEFAULT_CALLBACK . '/%ajax_table_key/%ajax_table_js'] = array(
+    'page callback'    => 'ajax_table_callback',
+    'page arguments'  => array(3,4),
+    'access callback' => 1,
+    'delivery callback' => 'ajax_deliver',
+    'type' => MENU_CALLBACK,
+  );
   
   return $items;
 }
@@ -53,25 +55,25 @@ function ajax_table_js_load($js) {
  * Callback function returning AJAX commands to replace wrappers
  */
 function ajax_table_callback($data = FALSE, $js = FALSE) {
-	if (!$js) {
-		drupal_set_message(t('Please turn on javascript support in your web browser.'), 'error');
-		drupal_goto();
-	}
+  if (!$js) {
+    drupal_set_message(t('Please turn on javascript support in your web browser.'), 'error');
+    drupal_goto();
+  }
   if (!$data) return array('#type' => 'ajax', '#commands' => array());
-	// Get build_id to retrieve form from cache
-	$form_state = form_state_defaults();
-	$form = form_get_cache($data['build_id'], $form_state);
-	$form_state['rebuild_info']['copy']['#build_id'] = $data['build_id'];
-	$form_state['values'] = array();
-	unset($form_state['no_cache']);
+  // Get build_id to retrieve form from cache
+  $form_state = form_state_defaults();
+  $form = form_get_cache($data['build_id'], $form_state);
+  $form_state['rebuild_info']['copy']['#build_id'] = $data['build_id'];
+  $form_state['values'] = array();
+  unset($form_state['no_cache']);
   // Saving and processing values happens inside form_builder function
   // drupal_rebuild_form do all nessesary stuff to archieve that
   // Basically, rebuilding invoked on form submit
   // In order to save form state and eneterd values
   // $form_state must be saved in cache (default form caching mechanism)
   // for further retrieving
-	$form = drupal_rebuild_form($form['#form_id'], $form_state, $form);
-	// FUCK YEAH!!! SUCK MY BALLS!!!
+  $form = drupal_rebuild_form($form['#form_id'], $form_state, $form);
+  // FUCK YEAH!!! SUCK MY BALLS!!!
 
   // Generating replacing commands
   $commands = array();
@@ -92,10 +94,10 @@ function ajax_table_callback($data = FALSE, $js = FALSE) {
   }
   // Remove non-existing data
   $query = db_select('cache_form', 'cf');
-		$query->fields('cf', array('cid'));
+    $query->fields('cf', array('cid'));
   $result = $query
-		->execute()
-		->fetchCol(0);
+    ->execute()
+    ->fetchCol(0);
   $cached_forms = array();
   foreach ($result as $key => $value) {
      $value = str_ireplace('form_state_', '', $value);
@@ -107,10 +109,10 @@ function ajax_table_callback($data = FALSE, $js = FALSE) {
       unset($_SESSION['ajax_table_data'][$key]);
   }
   // Return commands
-	return array(
-		'#type' => 'ajax',
-		'#commands' => $commands,
-	);
+  return array(
+    '#type' => 'ajax',
+    '#commands' => $commands,
+  );
 }
 
 /**
@@ -127,28 +129,33 @@ function ajax_table_flush_caches() {
  */
 function ajax_table_element_info() {
   $types['ajax_table'] = array(
-		'#attributes' => array(),
-		'#sticky' => FALSE,
-		'#tree' => TRUE,
-		'#theme' => 'ajax_table',	
-		'#header' => array(),
-		'rows' => array(),
-		'#empty' => t('No entries'),
+    '#attributes' => array(),
+    '#sticky' => FALSE,
+    '#tree' => TRUE,
+    '#theme' => 'ajax_table',  
+    '#header' => array(),
+    'rows' => array(),
+    '#empty' => t('No entries'),
     '#after_build' => array('ajax_table_after_build'),   
     '#element' => 0,
-    '#ajax_table_callback' => 'system/ajax_table_callback',
+    '#ajax_table_callback' => AJAX_TABLE_DEFAULT_CALLBACK,
+    '#ajax_table_wrapper' => '',
     '#replacements' => FALSE,
-    '#draggable' => FALSE,    
+    '#draggable' => FALSE,
+    '#caption' => NULL,
+    '#colgroups' => array(),    
   );
   $types['ajax_pager'] = array(
-		'#tags' => array(),
+    '#tags' => array(),
     '#element' => 0,
-		'#parameters' => array(),
-		'#quantity' => 9,
-		'#theme' => 'ajax_pager',
+    '#parameters' => array(),
+    '#quantity' => 9,
+    '#theme' => 'ajax_pager',
     '#after_build' => array('ajax_table_after_build'),
-    '#ajax_table_callback' => 'system/ajax_table_callback',
-    '#replacements' => FALSE,
+    '#ajax_table_callback' => AJAX_TABLE_DEFAULT_CALLBACK,
+    '#ajax_table_wrapper' => '',    
+    '#tags' => array(),
+    '#parameters' => array(),    
   );  
   return $types;
 }
@@ -220,22 +227,20 @@ function ajax_table_generate_table_wrapper_id($form_element) {
  * Removes properties from array
  */
 function ajax_table_strip_properties(&$elements) {
-	foreach ($elements as $key => $value)
-		if ($key !== '' && $key[0] === '#') unset($elements[$key]);
+  foreach ($elements as $key => $value)
+    if ($key !== '' && $key[0] === '#') unset($elements[$key]);
 }
 
 /**
  * From common.inc drupal_common_theme
  */
 function ajax_table_theme($existing, $type, $theme, $path) {
-	return array(
-    //'ajax_table' => array('variables' => array('header' => NULL, 'rows' => NULL, 'attributes' => array(), 'caption' => NULL, 'colgroups' => array(), 'sticky' => TRUE, 'empty' => '')),
+  return array(
     'ajax_table' => array(
-      'render element' => 'element',
+      'render element' => 'elements',
     ),    
-    //'ajax_pager' => array('variables' => array('tags' => array(), 'element' => 0, 'parameters' => array(), 'quantity' => 9)),
     'ajax_pager' => array(
-      'render element' => 'element',
+      'render element' => 'elements',
     ),       
     'ajax_pager_first' => array(
       'variables' => array('text' => NULL, 'element' => 0, 'parameters' => array()),
@@ -252,5 +257,5 @@ function ajax_table_theme($existing, $type, $theme, $path) {
     'ajax_pager_link' => array(
       'variables' => array('text' => NULL, 'page_new' => NULL, 'element' => NULL, 'parameters' => array(), 'attributes' => array()),
     ),
-	);
+  );
 }

@@ -6,34 +6,22 @@ define('AJAX_TABLE_NON_EXISTING_PAGE', 'non/existing/page');
 /**
  * Overrides theme_table
  */
-function theme_ajax_table($element) {
-  $element = $element['element'];
-  $header = $element['#header'];
-  $attributes = $element['#attributes'];
-  $caption = isset($element['#caption']) ? $element['#caption'] : NULL ;
-  $colgroups = isset($element['#colgroups']) ? $element['#colgroups'] : array();
-  $sticky = $element['#sticky'];
-  $empty = $element['#empty'];
-  $ajax_table_callback = $element['#ajax_table_callback'];
-  $ajax_table_wrapper = $element['#ajax_table_wrapper'];
+function theme_ajax_table($elements) {
+  $variables = $elements['elements'];
   
-  $rows = $element['rows'];
+  $header = $variables['#header'];
+  $attributes = $variables['#attributes'];
+  $caption = $variables['#caption'];
+  $colgroups = $variables['#colgroups'];
+  $sticky = $variables['#sticky'];
+  $empty = $variables['#empty'];
+  
+  $ajax_table_callback = $variables['#ajax_table_callback'];
+  $ajax_table_wrapper = $variables['#ajax_table_wrapper'];
+  $draggable = (bool)$variables['#draggable']; 
+  
+  $rows = $variables['rows'];
   $rows_keys = element_children($rows);
-
-  if (isset($element['#draggable']) && $element['#draggable']) {
-    foreach ($rows_keys as $i) {
-      $row_attr =
-        isset($rows[$i]['#attributes']) ? $rows[$i]['#attributes'] : array();
-      $row = array(
-        'data' => array(),
-        '#attributes' => array_merge_recursive($row_attr,
-          array('class' => array('draggable'))),
-      );
-      foreach ($_fields = element_children($rows[$i]) as $j)
-        $row['data'][$j] = $rows[$i][$j];
-      $rows[$i] = $row;
-    }
-  }
   
   // Add sticky headers, if applicable.
   if (count($header) && $sticky) {
@@ -139,6 +127,11 @@ function theme_ajax_table($element) {
           $class = $flip[$class];
           $attributes['class'][] = $class;
         }
+        
+        // Add draggable
+        if ($draggable) {
+          $attributes['class'][] = 'draggable';
+        }
 
         // Build row
         $output .= ' <tr' . drupal_attributes($attributes) . '>';
@@ -166,8 +159,8 @@ function theme_ajax_table($element) {
     'class' => array('ajax-table-table-wrapper'),
   );
   $output = '<div' . drupal_attributes($attributes) . '>' . $output . '</div>';
-  unset($element['rows']);
-  return $output . drupal_render_children($element);
+  unset($variables['rows']);
+  return $output . drupal_render_children($variables);
 }
 
 /**
@@ -231,19 +224,14 @@ function ajax_tablesort_header($cell, $header, $ts, $ajax_table_callback = '') {
 /**
  * Overrides theme_pager
  */
-function theme_ajax_pager($_element) {
-  // Using render element instead of variables
-  // Issue: element variable names intersect
-  $_element = $_element['element'];
-  $tags = isset($_element['#tags']) ? $_element['#tags'] : array();
-  $element = isset($_element['#element']) ? $_element['#element'] : 0;
-  $parameters = isset($_element['#parameters']) ?
-    $_element['#parameters'] : array();
-  $quantity = isset($_element['#quantity']) ? $_element['#quantity'] : 9;  
-  $ajax_table_callback = isset($_element['#ajax_table_callback']) ?
-    $_element['#ajax_table_callback'] : '';
-  $ajax_table_wrapper = isset($_element['#ajax_table_wrapper']) ?
-    $_element['#ajax_table_wrapper'] : '';
+function theme_ajax_pager($elements) {
+  $variables = $elements['elements'];
+  $tags = $variables['#tags'];
+  $element = $variables['#element'];
+  $parameters = $variables['#parameters'];
+  $quantity = $variables['#quantity'];  
+  $ajax_table_callback = $variables['#ajax_table_callback'];
+  $ajax_table_wrapper = $variables['#ajax_table_wrapper'];
 
   global $pager_page_array, $pager_total;
   if (!isset($pager_page_array[$element]) ||
@@ -471,7 +459,7 @@ function theme_ajax_pager_link($variables) {
   $parameters = $variables['parameters'];
   $attributes = $variables['attributes'];
   $ajax_table_callback = $variables['ajax_table_callback'];
-  $ajax_table_wrapper = $variables['ajax_table_wrapper'];  
+  $ajax_table_wrapper = $variables['ajax_table_wrapper']; 
 
   $page = isset($_GET['page']) ? $_GET['page'] : '';
   if ($new_page = implode(',', pager_load_array($page_new[$element], $element, explode(',', $page)))) {
